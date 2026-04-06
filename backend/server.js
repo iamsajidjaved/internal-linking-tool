@@ -15,12 +15,15 @@ app.use(express.json({ limit: '10mb' }));
 // API routes
 app.use('/api', apiRoutes);
 
-// Serve React frontend in production
+// Serve React frontend in production (only if build exists)
+const fs = require('fs');
 const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
-app.use(express.static(frontendBuild));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendBuild, 'index.html'));
-});
+if (fs.existsSync(frontendBuild)) {
+  app.use(express.static(frontendBuild));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuild, 'index.html'));
+  });
+}
 
 // Error handler
 app.use(errorHandler);
