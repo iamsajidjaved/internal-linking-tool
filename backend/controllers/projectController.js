@@ -495,7 +495,7 @@ exports.applyLinks = async (req, res, next) => {
     const modifiedContent = await geminiService.injectLinks(currentContent, approvedLinks, geminiKey);
 
     // Update via WP API
-    await wpService.updatePostContent(domain, username, appPassword, article.id, modifiedContent);
+    await wpService.updatePostContent(domain, username, appPassword, article.id, modifiedContent, article.type);
 
     article.status = 'applied';
     article.appliedAt = new Date().toISOString();

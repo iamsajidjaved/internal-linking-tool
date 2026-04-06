@@ -96,9 +96,10 @@ async function fetchAllWpContent(domain, username, appPassword) {
 /**
  * Update a post/page content via WP REST API.
  */
-async function updatePostContent(domain, username, appPassword, postId, newContent) {
+async function updatePostContent(domain, username, appPassword, postId, newContent, type = 'post') {
   const client = createWpClient(domain, username, appPassword);
-  const { data } = await client.post(`/posts/${postId}`, { content: newContent });
+  const endpoint = type === 'page' ? `/pages/${postId}` : `/posts/${postId}`;
+  const { data } = await client.post(endpoint, { content: newContent });
   return data;
 }
 

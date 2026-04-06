@@ -3,15 +3,11 @@ import { getProject } from '../services/api';
 import ContentList from './ContentList';
 import AISuggestions from './AISuggestions';
 import ReviewApprove from './ReviewApprove';
-import ExecutionLogs from './ExecutionLogs';
-import Settings from './Settings';
 
 const TABS = [
-  { key: 'content', label: 'Content', icon: '📄', step: 1 },
-  { key: 'suggestions', label: 'AI Suggest', icon: '🤖', step: 2 },
-  { key: 'review', label: 'Review & Apply', icon: '✅', step: 3 },
-  { key: 'logs', label: 'Logs', icon: '📋', step: null },
-  { key: 'settings', label: 'Settings', icon: '⚙️', step: null },
+  { key: 'content', label: 'Fetch Content', step: 1 },
+  { key: 'suggestions', label: 'AI Suggestions', step: 2 },
+  { key: 'review', label: 'Review & Apply', step: 3 },
 ];
 
 function ProjectPage({ domain, project: initialProject, setProjectData, navigateApp }) {
@@ -69,10 +65,6 @@ function ProjectPage({ domain, project: initialProject, setProjectData, navigate
         return <AISuggestions domain={domain} project={project} navigate={navigate} setProjectData={handleSetProjectData} />;
       case 'review':
         return <ReviewApprove domain={domain} project={project} navigate={navigate} setProjectData={handleSetProjectData} />;
-      case 'logs':
-        return <ExecutionLogs domain={domain} navigate={navigate} />;
-      case 'settings':
-        return <Settings domain={domain} />;
       default:
         return <ContentList domain={domain} project={project} navigate={navigate} setProjectData={handleSetProjectData} />;
     }
@@ -96,22 +88,30 @@ function ProjectPage({ domain, project: initialProject, setProjectData, navigate
         </button>
       </div>
 
-      {/* Tab bar */}
-      <div className="project-tabs">
-        {TABS.map((tab) => {
-          const isAccessible = tab.step === null || tab.step <= step + 1;
-          const isDone = tab.step !== null && tab.step <= step;
+      {/* Stepper */}
+      <div className="project-stepper">
+        {TABS.map((tab, idx) => {
+          const isAccessible = tab.step <= step + 1;
+          const isDone = tab.step <= step;
+          const isActive = activeTab === tab.key;
           return (
-            <button
-              key={tab.key}
-              className={`project-tab ${activeTab === tab.key ? 'active' : ''} ${!isAccessible ? 'disabled' : ''}`}
-              onClick={() => isAccessible && setActiveTab(tab.key)}
-              disabled={!isAccessible}
-            >
-              <span className="project-tab-icon">{isDone ? '✓' : tab.icon}</span>
-              <span className="project-tab-label">{tab.label}</span>
-              {tab.step && isDone && <span className="project-tab-done" />}
-            </button>
+            <React.Fragment key={tab.key}>
+              {idx > 0 && (
+                <div className={`stepper-line ${isDone ? 'done' : step >= tab.step - 1 ? 'partial' : ''}`} />
+              )}
+              <button
+                className={`stepper-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${!isAccessible ? 'disabled' : ''}`}
+                onClick={() => isAccessible && setActiveTab(tab.key)}
+                disabled={!isAccessible}
+              >
+                <span className="stepper-circle">
+                  {isDone ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  ) : tab.step}
+                </span>
+                <span className="stepper-label">{tab.label}</span>
+              </button>
+            </React.Fragment>
           );
         })}
       </div>
