@@ -80,7 +80,7 @@ function saveConfig(config) {
 function getSettings(domain) {
   const config = loadConfig();
   return {
-    geminiApiKey: config.projects?.[domain]?.geminiApiKey || '',
+    geminiApiKey: config.projects?.[domain]?.geminiApiKey || config.global?.geminiApiKey || '',
     wpUsername: config.projects?.[domain]?.wpUsername || '',
     wpAppPassword: config.projects?.[domain]?.wpAppPassword || '',
   };
