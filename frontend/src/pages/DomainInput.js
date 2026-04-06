@@ -64,13 +64,15 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
       await new Promise((resolve, reject) => {
         const stream = analyzeContentStream(normalizedDomain, {
           onInit: (d) => {
-            setApProgress({ current: 0, total: d.total, message: `0/${d.total}` });
+            setApProgress({ current: d.alreadyDone || 0, total: d.total, message: `${d.alreadyDone || 0}/${d.total}` });
           },
           onProgress: (d) => {
-            setApProgress({ current: d.current, total: d.total, message: `${d.current}/${d.total} — ${d.title || ''}` });
+            const current = d.analyzed || d.current || 0;
+            const title = d.article?.title || d.title || '';
+            setApProgress({ current, total: d.total, message: `${current}/${d.total} — ${title}` });
           },
           onDone: (d) => {
-            addLog(`Analysis done: ${d.total} articles`, 'success');
+            addLog(`Analysis done: ${d.analyzed || d.total} articles`, 'success');
             setApStageStatus((s) => ({ ...s, analyze: 'done' }));
             resolve();
           },
@@ -91,13 +93,15 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
       await new Promise((resolve, reject) => {
         const stream = generateSuggestionsStream(normalizedDomain, {
           onInit: (d) => {
-            setApProgress({ current: 0, total: d.total, message: `0/${d.total}` });
+            setApProgress({ current: d.alreadyDone || 0, total: d.total, message: `${d.alreadyDone || 0}/${d.total}` });
           },
           onProgress: (d) => {
-            setApProgress({ current: d.current, total: d.total, message: `${d.current}/${d.total} — ${d.title || ''}` });
+            const current = d.generated || d.current || 0;
+            const title = d.article?.title || d.title || '';
+            setApProgress({ current, total: d.total, message: `${current}/${d.total} — ${title}` });
           },
           onDone: (d) => {
-            addLog(`Suggestions done: ${d.generated} generated`, 'success');
+            addLog(`Suggestions done: ${d.generated || d.total} generated`, 'success');
             setApStageStatus((s) => ({ ...s, suggest: 'done' }));
             resolve();
           },
