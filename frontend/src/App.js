@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Dashboard from './pages/Dashboard';
 import DomainInput from './pages/DomainInput';
 import ContentList from './pages/ContentList';
@@ -7,25 +7,27 @@ import ReviewApprove from './pages/ReviewApprove';
 import ExecutionLogs from './pages/ExecutionLogs';
 import './App.css';
 
-const PAGES = {
-  dashboard: 'Dashboard',
-  input: 'Domain Input',
-  content: 'Content List',
-  suggestions: 'AI Suggestions',
-  review: 'Review & Approve',
-  logs: 'Execution Logs',
-};
+const NAV_ITEMS = [
+  { key: 'dashboard', label: 'Dashboard', icon: '📊', step: null },
+  { key: 'input', label: 'Add Domain', icon: '🌐', step: '1' },
+  { key: 'content', label: 'Content', icon: '📄', step: '2' },
+  { key: 'suggestions', label: 'AI Suggestions', icon: '🤖', step: '3' },
+  { key: 'review', label: 'Review & Apply', icon: '✅', step: '4' },
+  { key: 'logs', label: 'Logs & Export', icon: '📋', step: null },
+];
 
 function App() {
   const [page, setPage] = useState('dashboard');
   const [currentDomain, setCurrentDomain] = useState('');
   const [projectData, setProjectData] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navigate = (p, domain, data) => {
+  const navigate = useCallback((p, domain, data) => {
     if (domain) setCurrentDomain(domain);
     if (data) setProjectData(data);
     setPage(p);
-  };
+    setSidebarOpen(false);
+  }, []);
 
   const renderPage = () => {
     switch (page) {
@@ -48,25 +50,41 @@ function App() {
 
   return (
     <div className="app">
-      <nav className="sidebar">
+      <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle menu">
+        <span /><span /><span />
+      </button>
+
+      <div className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`} onClick={() => setSidebarOpen(false)} />
+
+      <nav className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <h2>🔗 Link Tool</h2>
+          <h2>
+            <span className="logo-icon">🔗</span>
+            LinkForge AI
+          </h2>
         </div>
         <ul>
-          {Object.entries(PAGES).map(([key, label]) => (
-            <li key={key} className={page === key ? 'active' : ''} onClick={() => setPage(key)}>
+          {NAV_ITEMS.map(({ key, label, icon, step }) => (
+            <li key={key} className={page === key ? 'active' : ''} onClick={() => navigate(key)}>
+              <span className="nav-icon">{icon}</span>
               {label}
+              {step && <span className="nav-step">{step}</span>}
             </li>
           ))}
         </ul>
         {currentDomain && (
           <div className="sidebar-domain">
-            <small>Active domain:</small>
-            <strong>{currentDomain}</strong>
+            <small>Active Project</small>
+            <div className="domain-text">{currentDomain.replace(/^https?:\/\//, '')}</div>
           </div>
         )}
       </nav>
-      <main className="main-content">{renderPage()}</main>
+
+      <main className="main-content">
+        <div className="animate-in" key={page}>
+          {renderPage()}
+        </div>
+      </main>
     </div>
   );
 }
