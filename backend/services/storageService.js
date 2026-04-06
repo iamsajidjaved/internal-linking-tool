@@ -80,7 +80,7 @@ function saveConfig(config) {
 function getSettings(domain) {
   const config = loadConfig();
   return {
-    geminiApiKey: config.global?.geminiApiKey || '',
+    geminiApiKey: config.projects?.[domain]?.geminiApiKey || '',
     wpUsername: config.projects?.[domain]?.wpUsername || '',
     wpAppPassword: config.projects?.[domain]?.wpAppPassword || '',
   };
@@ -88,12 +88,11 @@ function getSettings(domain) {
 
 function saveSettings(domain, settings) {
   const config = loadConfig();
-  if (!config.global) config.global = {};
   if (!config.projects) config.projects = {};
   if (!config.projects[domain]) config.projects[domain] = {};
 
   if (settings.geminiApiKey !== undefined) {
-    config.global.geminiApiKey = settings.geminiApiKey;
+    config.projects[domain].geminiApiKey = settings.geminiApiKey;
   }
   if (settings.wpUsername !== undefined) {
     config.projects[domain].wpUsername = settings.wpUsername;

@@ -112,15 +112,15 @@ function Settings({ domain }) {
       )}
 
       <form onSubmit={handleSave}>
-        {/* Gemini API Key — Global */}
+        {/* Gemini API Key — Per Project */}
         <div className="card">
-          <h3>🤖 Gemini API Key <span className="text-muted text-sm">(global — shared across all projects)</span></h3>
+          <h3>🤖 Gemini API Key</h3>
           <p className="text-sm text-muted mb-4">
             Get your API key from{' '}
             <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
               Google AI Studio
             </a>.
-            Falls back to <code>.env</code> if not set here.
+            Each project stores its own key.
           </p>
           <div className="settings-status">
             {hasGeminiKey ? (
@@ -143,13 +143,13 @@ function Settings({ domain }) {
 
         {/* WordPress Credentials — Per Project */}
         <div className="card mt-4">
-          <h3>🌐 WordPress Credentials <span className="text-muted text-sm">(per project)</span></h3>
+          <h3>🌐 WordPress Credentials</h3>
           <p className="text-sm text-muted mb-4">
             Required to push internal links to WordPress. Uses{' '}
             <a href="https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/" target="_blank" rel="noopener noreferrer">
               Application Passwords
             </a>{' '}
-            for authentication. Falls back to <code>.env</code> if not set here.
+            for authentication. Each project stores its own credentials.
           </p>
           <div className="settings-status">
             {hasWpCredentials ? (

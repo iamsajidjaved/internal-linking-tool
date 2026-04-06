@@ -5,6 +5,12 @@ const geminiService = require('../services/geminiService');
 const storageService = require('../services/storageService');
 const { geminiLimiter } = require('../middleware/rateLimiter');
 
+// Resolve Gemini API key for a project (per-project config → .env fallback)
+function resolveGeminiKey(domain) {
+  const settings = storageService.getSettings(domain);
+  return settings.geminiApiKey || process.env.GEMINI_API_KEY;
+}
+
 // List all projects
 exports.listProjects = (req, res) => {
   const projects = storageService.listProjects();
@@ -110,6 +116,7 @@ exports.analyzeContent = async (req, res, next) => {
     const project = storageService.loadProject(domain);
     if (!project) return res.status(404).json({ error: true, message: 'Project not found' });
 
+    const geminiKey = resolveGeminiKey(domain);
     let analyzed = 0;
     let skipped = 0;
     let failed = 0;
@@ -123,7 +130,7 @@ exports.analyzeContent = async (req, res, next) => {
       }
       try {
         article.analysis = await geminiLimiter.execute(() =>
-          geminiService.analyzeContent(article)
+          geminiService.analyzeContent(article, geminiKey)
         );
         article.status = 'analyzed';
         analyzed++;
@@ -182,6 +189,7 @@ exports.analyzeContentStream = async (req, res) => {
 
   send('init', { total, alreadyDone });
 
+  const geminiKey = resolveGeminiKey(domain);
   let analyzed = alreadyDone;
   let failed = 0;
   let aborted = false;
@@ -196,7 +204,7 @@ exports.analyzeContentStream = async (req, res) => {
 
     try {
       article.analysis = await geminiLimiter.execute(() =>
-        geminiService.analyzeContent(article)
+        geminiService.analyzeContent(article, geminiKey)
       );
       article.status = 'analyzed';
       analyzed++;
@@ -263,6 +271,7 @@ exports.generateSuggestions = async (req, res, next) => {
       ? project.articles.filter((a) => a.url === articleUrl)
       : project.articles;
 
+    const geminiKey = resolveGeminiKey(domain);
     let generated = 0;
     for (const article of targetArticles) {
       // Skip articles that already have valid suggestions (resume support)
@@ -272,7 +281,7 @@ exports.generateSuggestions = async (req, res, next) => {
       }
       try {
         const result = await geminiLimiter.execute(() =>
-          geminiService.generateLinkingSuggestions(article, project.articles)
+          geminiService.generateLinkingSuggestions(article, project.articles, geminiKey)
         );
         article.suggestions = result.links || [];
         article._suggestError = null;
@@ -364,7 +373,7 @@ exports.generateSuggestionsStream = async (req, res) => {
 
       try {
         const result = await geminiLimiter.execute(() =>
-          geminiService.generateLinkingSuggestions(article, project.articles)
+          geminiService.generateLinkingSuggestions(article, project.articles, resolveGeminiKey(domain))
         );
         article.suggestions = result.links || [];
         article._suggestError = null;
@@ -482,7 +491,8 @@ exports.applyLinks = async (req, res, next) => {
     }
 
     // Use Gemini to inject links
-    const modifiedContent = await geminiService.injectLinks(currentContent, approvedLinks);
+    const geminiKey = resolveGeminiKey(domain);
+    const modifiedContent = await geminiService.injectLinks(currentContent, approvedLinks, geminiKey);
 
     // Update via WP API
     await wpService.updatePostContent(domain, username, appPassword, article.id, modifiedContent);

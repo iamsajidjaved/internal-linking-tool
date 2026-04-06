@@ -1,16 +1,12 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const storageService = require('./storageService');
 
 let genAI = null;
 let model = null;
 let lastApiKey = null;
 
-function getModel() {
-  const config = storageService.loadConfig();
-  const apiKey = config.global?.geminiApiKey || process.env.GEMINI_API_KEY;
-
-  if (!apiKey || apiKey === 'your_google_ai_studio_key') {
-    throw new Error('GEMINI_API_KEY is not configured. Set it in Settings or .env');
+function getModel(apiKey) {
+  if (!apiKey || apiKey === 'your_google_ai_studio_key' || apiKey === 'your_gemini_api_key_here') {
+    throw new Error('GEMINI_API_KEY is not configured for this project. Set it in Settings.');
   }
 
   // Recreate model if API key changed
@@ -25,8 +21,8 @@ function getModel() {
 /**
  * Analyze a single article's content and extract topic, keywords, semantic relevance.
  */
-async function analyzeContent(article) {
-  const m = getModel();
+async function analyzeContent(article, apiKey) {
+  const m = getModel(apiKey);
 
   const prompt = `You are an advanced SEO content analyst specializing in Vietnamese-language websites and internal linking strategy.
 
@@ -73,8 +69,8 @@ Return ONLY valid JSON, no markdown fences.`;
 /**
  * Generate internal linking suggestions for a given article.
  */
-async function generateLinkingSuggestions(article, allArticles) {
-  const m = getModel();
+async function generateLinkingSuggestions(article, allArticles, apiKey) {
+  const m = getModel(apiKey);
 
   // Build enriched candidate list with analysis metadata for smarter suggestions
   const enrichedCandidates = allArticles
@@ -159,8 +155,8 @@ Return ONLY valid JSON, no markdown fences.`;
 /**
  * Generate the modified HTML content with links injected.
  */
-async function injectLinks(articleContent, approvedLinks) {
-  const m = getModel();
+async function injectLinks(articleContent, approvedLinks, apiKey) {
+  const m = getModel(apiKey);
 
   const prompt = `You are an HTML content editor.
 

@@ -6,6 +6,7 @@ import {
   getProject,
   updateSuggestions,
   applyLinks,
+  saveSettings,
 } from '../services/api';
 
 const AP_STAGES = [
@@ -19,6 +20,7 @@ const AP_STAGES = [
 function DomainInput({ navigate, onProjectCreated, setProjectData }) {
   const [domain, setDomain] = useState('');
   const [source, setSource] = useState('sitemap');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [wpUsername, setWpUsername] = useState('');
   const [wpAppPassword, setWpAppPassword] = useState('');
   const [autoPilot, setAutoPilot] = useState(false);
@@ -187,6 +189,11 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
       return;
     }
 
+    if (!geminiApiKey) {
+      setError('Gemini API key is required');
+      return;
+    }
+
     let normalizedDomain = domain.trim();
     if (!normalizedDomain.startsWith('http')) {
       normalizedDomain = 'https://' + normalizedDomain;
@@ -194,6 +201,14 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
 
     setLoading(true);
     try {
+      // Save credentials per-project before fetching
+      await saveSettings({
+        domain: normalizedDomain,
+        geminiApiKey,
+        wpUsername,
+        wpAppPassword,
+      });
+
       const payload = { domain: normalizedDomain, source };
       if (source === 'wordpress') {
         payload.wpUsername = wpUsername;
@@ -272,30 +287,42 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
               </div>
             </div>
 
-            {source === 'wordpress' && (
-              <>
-                <hr className="divider" />
-                <div className="form-group">
-                  <label>WordPress Username</label>
-                  <input
-                    type="text"
-                    placeholder="admin"
-                    value={wpUsername}
-                    onChange={(e) => setWpUsername(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Application Password</label>
-                  <input
-                    type="password"
-                    placeholder="xxxx xxxx xxxx xxxx"
-                    value={wpAppPassword}
-                    onChange={(e) => setWpAppPassword(e.target.value)}
-                  />
-                  <div className="form-hint">Generate in WordPress: Users → Profile → Application Passwords</div>
-                </div>
-              </>
-            )}
+            <hr className="divider" />
+
+            <div className="form-group">
+              <label>🤖 Gemini API Key</label>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={geminiApiKey}
+                onChange={(e) => setGeminiApiKey(e.target.value)}
+              />
+              <div className="form-hint">
+                Get your key from{' '}
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
+                . Stored per-project.
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>🌐 WordPress Username</label>
+              <input
+                type="text"
+                placeholder="admin"
+                value={wpUsername}
+                onChange={(e) => setWpUsername(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>🔑 Application Password</label>
+              <input
+                type="password"
+                placeholder="xxxx xxxx xxxx xxxx"
+                value={wpAppPassword}
+                onChange={(e) => setWpAppPassword(e.target.value)}
+              />
+              <div className="form-hint">Generate in WordPress: Users → Profile → Application Passwords. Required for fetching via WP API and applying links.</div>
+            </div>
 
             {/* AutoPilot toggle */}
             <div className="ap-toggle" onClick={() => setAutoPilot(!autoPilot)}>
