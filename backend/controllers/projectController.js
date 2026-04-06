@@ -264,20 +264,26 @@ exports.generateSuggestions = async (req, res, next) => {
 
     let generated = 0;
     for (const article of targetArticles) {
+      // Skip articles that already have valid suggestions (resume support)
+      if (article.suggestions && article.suggestions.length > 0 && !article._suggestError) {
+        generated++;
+        continue;
+      }
       try {
         const result = await geminiLimiter.execute(() =>
           geminiService.generateLinkingSuggestions(article, project.articles)
         );
         article.suggestions = result.links || [];
+        article._suggestError = null;
         article.status = 'suggestions_ready';
         generated++;
 
-        if (generated % 3 === 0) {
-          storageService.saveProject(domain, project);
-        }
+        storageService.saveProject(domain, project);
       } catch (err) {
         console.error(`Failed to generate suggestions for ${article.url}:`, err.message);
         article.suggestions = [];
+        article._suggestError = err.message;
+        storageService.saveProject(domain, project);
       }
     }
 
@@ -290,6 +296,131 @@ exports.generateSuggestions = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// Generate suggestions with SSE progress streaming (resume-capable)
+exports.generateSuggestionsStream = async (req, res) => {
+  const { domain } = req.query;
+  if (!domain) {
+    res.status(400).json({ error: true, message: 'domain is required' });
+    return;
+  }
+
+  const project = storageService.loadProject(domain);
+  if (!project) {
+    res.status(404).json({ error: true, message: 'Project not found' });
+    return;
+  }
+
+  // Only process analyzed articles
+  const targetArticles = project.articles.filter(
+    (a) => a.analysis && !a.analysis.error
+  );
+
+  if (targetArticles.length === 0) {
+    res.status(400).json({ error: true, message: 'No analyzed articles found. Run analysis first.' });
+    return;
+  }
+
+  // Set up SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+
+  const send = (event, data) => {
+    try {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    } catch (_) { /* connection already closed */ }
+  };
+
+  const total = targetArticles.length;
+  // Resume: count articles that already have valid suggestions
+  const alreadyDone = targetArticles.filter(
+    (a) => a.suggestions && a.suggestions.length > 0 && !a._suggestError
+  ).length;
+
+  send('init', { total, alreadyDone });
+
+  let generated = alreadyDone;
+  let failed = 0;
+  let aborted = false;
+
+  req.on('close', () => { aborted = true; });
+
+  try {
+    for (let i = 0; i < targetArticles.length; i++) {
+      if (aborted) break;
+
+      const article = targetArticles[i];
+
+      // Skip already done (resume)
+      if (article.suggestions && article.suggestions.length > 0 && !article._suggestError) {
+        continue;
+      }
+
+      try {
+        const result = await geminiLimiter.execute(() =>
+          geminiService.generateLinkingSuggestions(article, project.articles)
+        );
+        article.suggestions = result.links || [];
+        article._suggestError = null;
+        article.status = 'suggestions_ready';
+        generated++;
+        storageService.saveProject(domain, project);
+
+        send('progress', {
+          index: i,
+          generated,
+          failed,
+          total,
+          remaining: total - generated - failed,
+          article: {
+            url: article.url,
+            title: article.title,
+            status: article.status,
+            suggestionCount: article.suggestions.length,
+          },
+        });
+      } catch (err) {
+        failed++;
+        console.error(`Failed to generate suggestions for ${article.url}:`, err.message);
+        article.suggestions = [];
+        article._suggestError = err.message;
+        storageService.saveProject(domain, project);
+
+        send('progress', {
+          index: i,
+          generated,
+          failed,
+          total,
+          remaining: total - generated - failed,
+          article: {
+            url: article.url,
+            title: article.title,
+            status: article.status,
+            error: err.message,
+          },
+        });
+      }
+    }
+  } catch (outerErr) {
+    console.error('Suggestion stream error:', outerErr.message);
+  }
+
+  project.status = 'suggestions_ready';
+  project.lastUpdated = new Date().toISOString();
+  project.logs.push({
+    timestamp: new Date().toISOString(),
+    action: 'suggest',
+    message: `Generated suggestions for ${generated} articles (${alreadyDone} resumed, ${failed} failed)`,
+  });
+  storageService.saveProject(domain, project);
+
+  send('done', { generated, failed, total });
+  res.end();
 };
 
 // Approve / reject / edit link suggestions

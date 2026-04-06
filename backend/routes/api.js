@@ -12,6 +12,7 @@ router.post('/fetch', ctrl.fetchContent);
 router.post('/analyze', ctrl.analyzeContent);
 router.get('/analyze-stream', ctrl.analyzeContentStream);
 router.post('/suggest', ctrl.generateSuggestions);
+router.get('/suggest-stream', ctrl.generateSuggestionsStream);
 router.put('/suggestions', ctrl.updateSuggestions);
 router.post('/apply', ctrl.applyLinks);
 
