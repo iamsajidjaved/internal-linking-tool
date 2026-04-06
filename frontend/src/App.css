@@ -790,6 +790,67 @@ body {
   flex-wrap: wrap;
 }
 
+/* ========== EXPORT DROPDOWN ========== */
+.export-dropdown-wrap {
+  position: relative;
+}
+
+.export-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.15);
+  min-width: 240px;
+  padding: 6px;
+  animation: dropdown-in 0.15s ease-out;
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.export-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background 0.15s;
+  flex-wrap: wrap;
+}
+
+.export-dropdown button:hover {
+  background: rgba(108,92,231,0.06);
+}
+
+.export-dropdown .export-icon {
+  font-size: 1.1rem;
+  width: 22px;
+  text-align: center;
+}
+
+.export-dropdown .export-desc {
+  flex-basis: 100%;
+  font-size: 0.73rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 32px;
+  margin-top: -2px;
+}
+
 /* ========== FORMS ========== */
 .form-group {
   margin-bottom: 20px;
@@ -833,6 +894,14 @@ body {
 
 .form-group input::placeholder {
   color: var(--text-muted);
+}
+
+.settings-status {
+  margin-bottom: 12px;
+}
+
+.mt-3 {
+  margin-top: 12px;
 }
 
 .form-radio-group {
@@ -1529,6 +1598,17 @@ tbody tr:last-child td {
 .article-list-item.selected {
   background: rgba(108,92,231,0.06);
   border-color: var(--accent);
+}
+
+.article-list-item.applied {
+  opacity: 0.65;
+  background: rgba(0,206,201,0.04);
+  border-color: var(--green);
+}
+
+.article-list-item.applied .article-count {
+  color: var(--green);
+  font-weight: 700;
 }
 
 .article-list-item .article-title {

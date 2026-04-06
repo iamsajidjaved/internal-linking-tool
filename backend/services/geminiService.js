@@ -1,16 +1,23 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const storageService = require('./storageService');
 
 let genAI = null;
 let model = null;
+let lastApiKey = null;
 
 function getModel() {
-  if (!model) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === 'your_google_ai_studio_key') {
-      throw new Error('GEMINI_API_KEY is not configured. Set it in .env');
-    }
+  const config = storageService.loadConfig();
+  const apiKey = config.global?.geminiApiKey || process.env.GEMINI_API_KEY;
+
+  if (!apiKey || apiKey === 'your_google_ai_studio_key') {
+    throw new Error('GEMINI_API_KEY is not configured. Set it in Settings or .env');
+  }
+
+  // Recreate model if API key changed
+  if (!model || lastApiKey !== apiKey) {
     genAI = new GoogleGenerativeAI(apiKey);
     model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    lastApiKey = apiKey;
   }
   return model;
 }

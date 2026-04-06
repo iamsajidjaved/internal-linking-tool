@@ -91,4 +91,8 @@ export const getLogs = (domain) => api.get('/logs', { params: { domain } }).then
 export const exportReport = (domain, format = 'json') =>
   api.get('/export', { params: { domain, format } }).then((r) => r.data);
 
+// Settings
+export const getSettings = (domain) => api.get('/settings', { params: { domain } }).then((r) => r.data);
+export const saveSettings = (payload) => api.put('/settings', payload).then((r) => r.data);
+
 export default api;

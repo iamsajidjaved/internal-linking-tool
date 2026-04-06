@@ -39,8 +39,9 @@ exports.fetchContent = async (req, res, next) => {
     let articles = [];
 
     if (source === 'wordpress') {
-      const username = req.body.wpUsername || process.env.WP_USERNAME;
-      const appPassword = req.body.wpAppPassword || process.env.WP_APP_PASSWORD;
+      const savedSettings = storageService.getSettings(domain);
+      const username = req.body.wpUsername || savedSettings.wpUsername || process.env.WP_USERNAME;
+      const appPassword = req.body.wpAppPassword || savedSettings.wpAppPassword || process.env.WP_APP_PASSWORD;
       if (!username || !appPassword) {
         return res.status(400).json({ error: true, message: 'WordPress credentials required' });
       }
@@ -453,8 +454,9 @@ exports.applyLinks = async (req, res, next) => {
       return res.status(400).json({ error: true, message: 'domain and articleUrl are required' });
     }
 
-    const username = wpUsername || process.env.WP_USERNAME;
-    const appPassword = wpAppPassword || process.env.WP_APP_PASSWORD;
+    const savedSettings = storageService.getSettings(domain);
+    const username = wpUsername || savedSettings.wpUsername || process.env.WP_USERNAME;
+    const appPassword = wpAppPassword || savedSettings.wpAppPassword || process.env.WP_APP_PASSWORD;
     if (!username || !appPassword) {
       return res.status(400).json({ error: true, message: 'WordPress credentials required' });
     }
@@ -536,4 +538,49 @@ exports.exportReport = (req, res) => {
   }
 
   res.json(report);
+};
+
+// Get settings for a project
+exports.getSettings = (req, res) => {
+  const { domain } = req.query;
+  if (!domain) return res.status(400).json({ error: true, message: 'domain is required' });
+  const settings = storageService.getSettings(domain);
+  // Mask the API key and password for the response
+  res.json({
+    geminiApiKey: settings.geminiApiKey ? '••••' + settings.geminiApiKey.slice(-4) : '',
+    wpUsername: settings.wpUsername,
+    wpAppPassword: settings.wpAppPassword ? '••••' + settings.wpAppPassword.slice(-4) : '',
+    hasGeminiKey: !!settings.geminiApiKey,
+    hasWpCredentials: !!(settings.wpUsername && settings.wpAppPassword),
+  });
+};
+
+// Save settings for a project
+exports.saveSettings = (req, res) => {
+  const { domain, geminiApiKey, wpUsername, wpAppPassword } = req.body;
+  if (!domain) return res.status(400).json({ error: true, message: 'domain is required' });
+
+  const updates = {};
+  if (geminiApiKey !== undefined && geminiApiKey !== '' && !geminiApiKey.startsWith('••••')) {
+    updates.geminiApiKey = geminiApiKey;
+  }
+  if (wpUsername !== undefined) {
+    updates.wpUsername = wpUsername;
+  }
+  if (wpAppPassword !== undefined && !wpAppPassword.startsWith('••••')) {
+    updates.wpAppPassword = wpAppPassword;
+  }
+
+  storageService.saveSettings(domain, updates);
+
+  // Return masked version
+  const saved = storageService.getSettings(domain);
+  res.json({
+    success: true,
+    geminiApiKey: saved.geminiApiKey ? '••••' + saved.geminiApiKey.slice(-4) : '',
+    wpUsername: saved.wpUsername,
+    wpAppPassword: saved.wpAppPassword ? '••••' + saved.wpAppPassword.slice(-4) : '',
+    hasGeminiKey: !!saved.geminiApiKey,
+    hasWpCredentials: !!(saved.wpUsername && saved.wpAppPassword),
+  });
 };

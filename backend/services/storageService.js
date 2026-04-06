@@ -58,4 +58,49 @@ function deleteProject(domain) {
   return false;
 }
 
-module.exports = { loadProject, saveProject, listProjects, deleteProject };
+// --- Config / Settings ---
+const CONFIG_FILE = path.join(DATA_DIR, '_config.json');
+
+function loadConfig() {
+  ensureDataDir();
+  if (fs.existsSync(CONFIG_FILE)) {
+    const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
+    return JSON.parse(raw);
+  }
+  return { global: {}, projects: {} };
+}
+
+function saveConfig(config) {
+  ensureDataDir();
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+}
+
+function getSettings(domain) {
+  const config = loadConfig();
+  return {
+    geminiApiKey: config.global?.geminiApiKey || '',
+    wpUsername: config.projects?.[domain]?.wpUsername || '',
+    wpAppPassword: config.projects?.[domain]?.wpAppPassword || '',
+  };
+}
+
+function saveSettings(domain, settings) {
+  const config = loadConfig();
+  if (!config.global) config.global = {};
+  if (!config.projects) config.projects = {};
+  if (!config.projects[domain]) config.projects[domain] = {};
+
+  if (settings.geminiApiKey !== undefined) {
+    config.global.geminiApiKey = settings.geminiApiKey;
+  }
+  if (settings.wpUsername !== undefined) {
+    config.projects[domain].wpUsername = settings.wpUsername;
+  }
+  if (settings.wpAppPassword !== undefined) {
+    config.projects[domain].wpAppPassword = settings.wpAppPassword;
+  }
+  saveConfig(config);
+  return getSettings(domain);
+}
+
+module.exports = { loadProject, saveProject, listProjects, deleteProject, loadConfig, saveConfig, getSettings, saveSettings };

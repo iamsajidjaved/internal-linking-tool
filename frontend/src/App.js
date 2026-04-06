@@ -6,6 +6,7 @@ import ContentList from './pages/ContentList';
 import AISuggestions from './pages/AISuggestions';
 import ReviewApprove from './pages/ReviewApprove';
 import ExecutionLogs from './pages/ExecutionLogs';
+import Settings from './pages/Settings';
 import './App.css';
 
 function App() {
@@ -113,6 +114,8 @@ function App() {
         return <ReviewApprove domain={currentDomain} project={projectData} navigate={navigate} setProjectData={setProjectData} />;
       case 'logs':
         return <ExecutionLogs domain={currentDomain} navigate={navigate} />;
+      case 'settings':
+        return <Settings domain={currentDomain} />;
       default:
         return (
           <Dashboard
@@ -154,6 +157,10 @@ function App() {
             <li className={page === 'input' ? 'active' : ''} onClick={() => navigate('input')}>
               <span className="nav-icon">➕</span>
               New Project
+            </li>
+            <li className={page === 'settings' ? 'active' : ''} onClick={() => navigate('settings')}>
+              <span className="nav-icon">⚙️</span>
+              Settings
             </li>
           </ul>
         </div>

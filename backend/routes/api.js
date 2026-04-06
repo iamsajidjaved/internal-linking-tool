@@ -20,4 +20,8 @@ router.post('/apply', ctrl.applyLinks);
 router.get('/logs', ctrl.getLogs);
 router.get('/export', ctrl.exportReport);
 
+// Settings
+router.get('/settings', ctrl.getSettings);
+router.put('/settings', ctrl.saveSettings);
+
 module.exports = router;
