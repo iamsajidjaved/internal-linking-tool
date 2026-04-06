@@ -265,17 +265,6 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
         </div>
       </div>
 
-      {/* Workflow steps */}
-      <div className="workflow-steps">
-        <div className="workflow-step done"><span className="step-num">✓</span><span>Fetch</span></div>
-        <div className="step-connector done" />
-        <div className="workflow-step done"><span className="step-num">✓</span><span>Analyze</span></div>
-        <div className="step-connector done" />
-        <div className="workflow-step done"><span className="step-num">✓</span><span>Suggest</span></div>
-        <div className="step-connector done" />
-        <div className="workflow-step active"><span className="step-num">4</span><span>Apply</span></div>
-      </div>
-
       {error && (
         <div className="alert alert-error">
           <span className="alert-icon">⚠️</span>
