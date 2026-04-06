@@ -482,8 +482,14 @@ exports.applyLinks = async (req, res, next) => {
     }
 
     // Get current content from WP
-    const wpContent = await wpService.fetchPosts(domain, username, appPassword);
-    const wpArticle = wpContent.find((p) => p.id === article.id || p.url === article.url);
+    let wpArticle;
+    if (article.type === 'page') {
+      const wpPages = await wpService.fetchPages(domain, username, appPassword);
+      wpArticle = wpPages.find((p) => p.id === article.id || p.url === article.url);
+    } else {
+      const wpPosts = await wpService.fetchPosts(domain, username, appPassword);
+      wpArticle = wpPosts.find((p) => p.id === article.id || p.url === article.url);
+    }
     const currentContent = wpArticle?.content || article.rawContent;
 
     if (!currentContent) {
