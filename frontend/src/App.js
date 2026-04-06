@@ -80,7 +80,7 @@ function App() {
 
   // Filter projects by search
   const filteredProjects = projects.filter((p) =>
-    p.domain.toLowerCase().includes(projectSearch.toLowerCase())
+    p.domain?.toLowerCase().includes(projectSearch.toLowerCase())
   );
 
   // Dynamic workflow nav items — only show when a project is selected

@@ -32,11 +32,12 @@ function saveProject(domain, data) {
 
 function listProjects() {
   ensureDataDir();
-  const files = fs.readdirSync(DATA_DIR).filter((f) => f.endsWith('.json'));
+  const files = fs.readdirSync(DATA_DIR).filter((f) => f.endsWith('.json') && f !== '_config.json');
   return files.map((f) => {
     const raw = fs.readFileSync(path.join(DATA_DIR, f), 'utf-8');
     try {
       const data = JSON.parse(raw);
+      if (!data.domain) return null;
       return {
         domain: data.domain,
         articleCount: data.articles?.length || 0,

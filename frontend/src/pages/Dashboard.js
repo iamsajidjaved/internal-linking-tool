@@ -22,7 +22,7 @@ function Dashboard({ navigate, projects, loading, onSelectProject, onDeleteProje
 
   // Filter & sort
   let filtered = projects.filter((p) =>
-    p.domain.toLowerCase().includes(search.toLowerCase())
+    p.domain?.toLowerCase().includes(search.toLowerCase())
   );
   if (filterStatus !== 'all') {
     filtered = filtered.filter((p) => p.status === filterStatus);
