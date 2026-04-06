@@ -1,15 +1,51 @@
 {
   "name": "internal-linking-tool",
   "version": "1.0.0",
-  "description": "AI-powered WordPress internal linking tool using Google Gemini",
+  "description": "AI-powered WordPress internal linking tool using Google Gemini. Automatically analyzes content, suggests relevant internal links, and applies them to your WordPress site.",
   "main": "backend/server.js",
+  "bin": {
+    "internal-linking-tool": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "backend/",
+    "frontend/public/",
+    "frontend/src/",
+    "frontend/package.json",
+    ".env.example",
+    "README.md"
+  ],
   "scripts": {
     "start": "node backend/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node backend/server.js",
     "client": "cd frontend && set PORT=3001 && npm start",
     "build": "cd frontend && npm run build",
-    "install-all": "npm install && cd frontend && npm install"
+    "install-all": "npm install && cd frontend && npm install",
+    "postinstall": "cd frontend && npm install",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "wordpress",
+    "internal-linking",
+    "seo",
+    "gemini",
+    "ai",
+    "link-building",
+    "content-optimization",
+    "wp-plugin",
+    "autopilot",
+    "sitemap"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "homepage": "",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
@@ -21,7 +57,6 @@
     "fast-xml-parser": "^4.5.1"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9"
+    "concurrently": "^9.1.2"
   }
 }

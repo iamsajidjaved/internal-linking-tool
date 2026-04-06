@@ -105,13 +105,13 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
         failedList.push(article.title);
       }
       setApplyProgress((p) => ({ ...p, done: succeeded + failedList.length, failed: failedList }));
-    }
 
-    // Refresh project data so applied statuses are reflected
-    try {
-      const updated = await getProject(domain);
-      setProjectData(updated);
-    } catch { /* silent */ }
+      // Refresh project data after each article so stats sync in real-time
+      try {
+        const refreshed = await getProject(domain);
+        setProjectData(refreshed);
+      } catch { /* silent */ }
+    }
 
     setApplying(false);
     setApplyProgress(null);

@@ -1,0 +1,21 @@
+# Sensitive files
+.env
+data/
+*.json
+!package.json
+!frontend/package.json
+
+# Dev/build artifacts
+node_modules/
+frontend/node_modules/
+frontend/build/
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+*.log
+.git/
