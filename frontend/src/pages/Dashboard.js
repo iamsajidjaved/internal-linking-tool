@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getSettings, saveSettings } from '../services/api';
 
 const STATUS_META = {
   fetched: { label: 'Fetched', color: '#3b82f6', bg: '#eff6ff' },
@@ -13,6 +14,43 @@ function Dashboard({ navigate, projects, loading, onSelectProject, onDeleteProje
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [filterStatus, setFilterStatus] = useState('all');
+
+  // Edit modal state
+  const [editDomain, setEditDomain] = useState(null);
+  const [editForm, setEditForm] = useState({ geminiApiKey: '', wpUsername: '', wpAppPassword: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editMsg, setEditMsg] = useState('');
+
+  const openEdit = async (domain, e) => {
+    e.stopPropagation();
+    setEditDomain(domain);
+    setEditForm({ geminiApiKey: '', wpUsername: '', wpAppPassword: '' });
+    setEditMsg('');
+    setEditLoading(true);
+    try {
+      const s = await getSettings(domain);
+      setEditForm({
+        geminiApiKey: s.geminiApiKey || '',
+        wpUsername: s.wpUsername || '',
+        wpAppPassword: s.wpAppPassword || '',
+      });
+    } catch { /* silent */ }
+    setEditLoading(false);
+  };
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    setEditMsg('');
+    try {
+      await saveSettings({ domain: editDomain, ...editForm });
+      setEditMsg('Saved!');
+      setTimeout(() => { setEditMsg(''); setEditDomain(null); }, 1200);
+    } catch {
+      setEditMsg('Failed to save');
+    }
+    setEditSaving(false);
+  };
 
   const totalArticles = projects.reduce((sum, p) => sum + (p.articleCount || 0), 0);
   const statusCounts = projects.reduce((acc, p) => {
@@ -141,13 +179,31 @@ function Dashboard({ navigate, projects, loading, onSelectProject, onDeleteProje
                       <span className="text-sm text-muted">{p.articleCount || 0} articles</span>
                     </div>
                   </div>
-                  <button
-                    className="btn-icon-sm danger"
-                    onClick={(e) => { e.stopPropagation(); onDeleteProject(p.domain); }}
-                    title="Delete project"
-                  >
-                    🗑
-                  </button>
+                  <div className="project-card-actions">
+                    <button
+                      className="btn-icon-sm"
+                      onClick={(e) => openEdit(p.domain, e)}
+                      title="Edit settings"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      className="btn-icon-sm danger"
+                      onClick={(e) => { e.stopPropagation(); onDeleteProject(p.domain); }}
+                      title="Delete project"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress indicator */}
@@ -185,6 +241,58 @@ function Dashboard({ navigate, projects, loading, onSelectProject, onDeleteProje
               <span className="new-project-icon">+</span>
               <span>New Project</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit settings modal */}
+      {editDomain && (
+        <div className="modal-overlay" onClick={() => setEditDomain(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>⚙️ Settings — {editDomain.replace(/^https?:\/\//, '')}</h3>
+              <button className="btn-icon-sm" onClick={() => setEditDomain(null)}>✕</button>
+            </div>
+            {editLoading ? (
+              <p className="text-muted" style={{ padding: 20, textAlign: 'center' }}>Loading...</p>
+            ) : (
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>🤖 Gemini API Key</label>
+                  <input
+                    type="password"
+                    placeholder="AIzaSy..."
+                    value={editForm.geminiApiKey}
+                    onChange={(e) => setEditForm((f) => ({ ...f, geminiApiKey: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>🌐 WordPress Username</label>
+                  <input
+                    type="text"
+                    placeholder="admin"
+                    value={editForm.wpUsername}
+                    onChange={(e) => setEditForm((f) => ({ ...f, wpUsername: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>🔑 Application Password</label>
+                  <input
+                    type="password"
+                    placeholder="xxxx xxxx xxxx xxxx"
+                    value={editForm.wpAppPassword}
+                    onChange={(e) => setEditForm((f) => ({ ...f, wpAppPassword: e.target.value }))}
+                  />
+                </div>
+                <div className="flex gap-3" style={{ marginTop: 16, alignItems: 'center' }}>
+                  <button className="btn btn-primary" onClick={handleEditSave} disabled={editSaving}>
+                    {editSaving ? 'Saving...' : '💾 Save'}
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => setEditDomain(null)}>Cancel</button>
+                  {editMsg && <span className="text-sm" style={{ color: editMsg === 'Saved!' ? 'var(--green)' : 'var(--red)' }}>{editMsg}</span>}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

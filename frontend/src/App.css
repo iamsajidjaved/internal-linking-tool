@@ -481,6 +481,51 @@ body {
 
 .btn-icon-sm.danger:hover {
   background: rgba(255,107,107,0.1);
+  color: var(--red);
+}
+
+/* Project card actions row */
+.project-card-actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* Modal overlay + card */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.modal-body {
+  padding: 20px 24px 24px;
 }
 
 /* Page container */
