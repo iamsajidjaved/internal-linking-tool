@@ -1731,6 +1731,169 @@ tbody tr:last-child td {
   animation: fadeInUp 0.4s ease-out;
 }
 
+/* ========== AUTOPILOT ========== */
+.ap-pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 24px;
+  padding: 24px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow-x: auto;
+}
+
+.ap-connector {
+  flex-shrink: 0;
+  width: 40px;
+  height: 3px;
+  background: var(--border);
+  margin-top: 22px;
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+
+.ap-connector.done {
+  background: var(--green);
+}
+
+.ap-stage {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  padding: 8px;
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.ap-stage.active {
+  background: rgba(108,92,231,0.08);
+}
+
+.ap-stage.done {
+  background: rgba(0,206,201,0.06);
+}
+
+.ap-stage.error {
+  background: rgba(255,107,107,0.06);
+}
+
+.ap-stage.warning {
+  background: rgba(253,203,110,0.08);
+}
+
+.ap-stage-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  transition: all 0.3s;
+}
+
+.ap-stage.active .ap-stage-icon {
+  border-color: var(--accent);
+  background: rgba(108,92,231,0.1);
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(108,92,231,0.3); }
+  70% { box-shadow: 0 0 0 8px rgba(108,92,231,0); }
+  100% { box-shadow: 0 0 0 0 rgba(108,92,231,0); }
+}
+
+.ap-stage.done .ap-stage-icon {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+}
+
+.ap-stage.error .ap-stage-icon {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+  font-weight: 800;
+}
+
+.ap-stage.warning .ap-stage-icon {
+  border-color: #fdcb6e;
+  background: #fdcb6e;
+  color: #222;
+}
+
+.ap-stage-label {
+  font-weight: 700;
+  font-size: 0.82rem;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.ap-stage-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.ap-progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+}
+
+.ap-log-container {
+  max-height: 350px;
+  overflow-y: auto;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--bg);
+}
+
+.ap-log-entry {
+  display: flex;
+  gap: 10px;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.ap-log-entry:nth-child(even) {
+  background: rgba(108,92,231,0.02);
+}
+
+.ap-log-time {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 72px;
+}
+
+.ap-log-msg {
+  color: var(--text-primary);
+}
+
+.ap-log-success .ap-log-msg {
+  color: var(--green);
+}
+
+.ap-log-error .ap-log-msg {
+  color: var(--red);
+}
+
+.ap-log-warning .ap-log-msg {
+  color: #fdcb6e;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
   .main-content {
