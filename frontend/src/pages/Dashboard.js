@@ -284,12 +284,14 @@ function Dashboard({ navigate, projects, loading, onSelectProject, onDeleteProje
                     onChange={(e) => setEditForm((f) => ({ ...f, wpAppPassword: e.target.value }))}
                   />
                 </div>
-                <div className="flex gap-3" style={{ marginTop: 16, alignItems: 'center' }}>
-                  <button className="btn btn-primary" onClick={handleEditSave} disabled={editSaving}>
-                    {editSaving ? 'Saving...' : '💾 Save'}
-                  </button>
+                <div className="flex gap-3" style={{ marginTop: 16, alignItems: 'center', justifyContent: 'space-between' }}>
                   <button className="btn btn-ghost" onClick={() => setEditDomain(null)}>Cancel</button>
-                  {editMsg && <span className="text-sm" style={{ color: editMsg === 'Saved!' ? 'var(--green)' : 'var(--red)' }}>{editMsg}</span>}
+                  <div className="flex gap-3" style={{ alignItems: 'center' }}>
+                    {editMsg && <span className="text-sm" style={{ color: editMsg === 'Saved!' ? 'var(--green)' : 'var(--red)' }}>{editMsg}</span>}
+                    <button className="btn btn-primary" onClick={handleEditSave} disabled={editSaving}>
+                      {editSaving ? 'Saving...' : '💾 Save'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

@@ -222,7 +222,7 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
         setLoading(false);
         runAutoPilot(normalizedDomain, result);
       } else {
-        navigate('content', normalizedDomain, result.project);
+        navigate('project', normalizedDomain, result.project);
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch content');
@@ -395,7 +395,7 @@ function DomainInput({ navigate, onProjectCreated, setProjectData }) {
             )}
             {apCompleted && (
               <>
-                <button className="btn btn-primary" onClick={() => navigate('review', apDomain)}>
+                <button className="btn btn-primary" onClick={() => navigate('project', apDomain)}>
                   📋 Review Results
                 </button>
                 <button className="btn btn-secondary" onClick={() => {

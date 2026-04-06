@@ -2,11 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { listProjects, getProject, deleteProject as apiDeleteProject } from './services/api';
 import Dashboard from './pages/Dashboard';
 import DomainInput from './pages/DomainInput';
-import ContentList from './pages/ContentList';
-import AISuggestions from './pages/AISuggestions';
-import ReviewApprove from './pages/ReviewApprove';
-import ExecutionLogs from './pages/ExecutionLogs';
-import Settings from './pages/Settings';
+import ProjectPage from './pages/ProjectPage';
 import './App.css';
 
 function App() {
@@ -44,9 +40,9 @@ function App() {
     try {
       const data = await getProject(domain);
       setProjectData(data);
-      setPage('content');
+      setPage('project');
     } catch {
-      setPage('content');
+      setPage('project');
     }
     setSidebarOpen(false);
   }, []);
@@ -64,32 +60,10 @@ function App() {
     } catch { /* ignore */ }
   }, [currentDomain]);
 
-  // Determine workflow step for current project
-  const getProjectStep = () => {
-    if (!projectData) return 0;
-    const articles = projectData.articles || [];
-    const hasAnalysis = articles.some((a) => a.analysis && !a.analysis.error);
-    const hasSuggestions = articles.some((a) => a.suggestions && a.suggestions.length > 0);
-    if (hasSuggestions) return 3;
-    if (hasAnalysis) return 2;
-    if (articles.length > 0) return 1;
-    return 0;
-  };
-
-  const step = getProjectStep();
-
   // Filter projects by search
   const filteredProjects = projects.filter((p) =>
     p.domain?.toLowerCase().includes(projectSearch.toLowerCase())
   );
-
-  // Dynamic workflow nav items — only show when a project is selected
-  const WORKFLOW_ITEMS = [
-    { key: 'content', label: 'Content', icon: '📄', step: 1 },
-    { key: 'suggestions', label: 'AI Suggest', icon: '🤖', step: 2 },
-    { key: 'review', label: 'Review', icon: '✅', step: 3 },
-    { key: 'logs', label: 'Logs', icon: '📋', step: null },
-  ];
 
   const renderPage = () => {
     switch (page) {
@@ -106,16 +80,20 @@ function App() {
         );
       case 'input':
         return <DomainInput navigate={navigate} onProjectCreated={loadProjects} setProjectData={setProjectData} />;
+      case 'project':
       case 'content':
-        return <ContentList domain={currentDomain} project={projectData} navigate={navigate} setProjectData={setProjectData} />;
       case 'suggestions':
-        return <AISuggestions domain={currentDomain} project={projectData} navigate={navigate} setProjectData={setProjectData} />;
       case 'review':
-        return <ReviewApprove domain={currentDomain} project={projectData} navigate={navigate} setProjectData={setProjectData} />;
       case 'logs':
-        return <ExecutionLogs domain={currentDomain} navigate={navigate} />;
       case 'settings':
-        return <Settings domain={currentDomain} />;
+        return (
+          <ProjectPage
+            domain={currentDomain}
+            project={projectData}
+            setProjectData={setProjectData}
+            navigateApp={navigate}
+          />
+        );
       default:
         return (
           <Dashboard
@@ -157,10 +135,6 @@ function App() {
             <li className={page === 'input' ? 'active' : ''} onClick={() => navigate('input')}>
               <span className="nav-icon">➕</span>
               New Project
-            </li>
-            <li className={page === 'settings' ? 'active' : ''} onClick={() => navigate('settings')}>
-              <span className="nav-icon">⚙️</span>
-              Settings
             </li>
           </ul>
         </div>
@@ -205,33 +179,6 @@ function App() {
         </div>
 
         {/* Workflow nav — only when a project is active */}
-        {currentDomain && (
-          <div className="sidebar-section">
-            <div className="sidebar-section-label">
-              Workflow
-              <span className="sidebar-domain-badge">{currentDomain.replace(/^https?:\/\//, '')}</span>
-            </div>
-            <ul>
-              {WORKFLOW_ITEMS.map((item) => {
-                const isAccessible = item.step === null || item.step <= step + 1;
-                const isDone = item.step !== null && item.step <= step;
-                return (
-                  <li
-                    key={item.key}
-                    className={`${page === item.key ? 'active' : ''} ${!isAccessible ? 'disabled' : ''}`}
-                    onClick={() => isAccessible && navigate(item.key, currentDomain, projectData)}
-                  >
-                    <span className="nav-icon">{isDone ? '✓' : item.icon}</span>
-                    {item.label}
-                    {item.step && (
-                      <span className={`nav-step ${isDone ? 'done' : ''}`}>{item.step}</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
 
         <div className="sidebar-footer">
           <div className="sidebar-footer-text">LinkForge AI v1.0</div>
@@ -246,17 +193,9 @@ function App() {
               <div className="top-bar-breadcrumb">
                 <span onClick={() => navigate('dashboard')}>Projects</span>
                 <span className="sep">/</span>
-                <span className="active-crumb" onClick={() => selectProject(currentDomain)}>
+                <span className="active-crumb current">
                   {currentDomain.replace(/^https?:\/\//, '')}
                 </span>
-                {page !== 'content' && (
-                  <>
-                    <span className="sep">/</span>
-                    <span className="active-crumb current">
-                      {WORKFLOW_ITEMS.find((i) => i.key === page)?.label || page}
-                    </span>
-                  </>
-                )}
               </div>
             )}
           </div>
