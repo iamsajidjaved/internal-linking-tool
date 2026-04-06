@@ -7,7 +7,6 @@ import AISuggestions from './pages/AISuggestions';
 import ReviewApprove from './pages/ReviewApprove';
 import ExecutionLogs from './pages/ExecutionLogs';
 import Settings from './pages/Settings';
-import AutoPilot from './pages/AutoPilot';
 import './App.css';
 
 function App() {
@@ -106,7 +105,7 @@ function App() {
           />
         );
       case 'input':
-        return <DomainInput navigate={navigate} onProjectCreated={loadProjects} />;
+        return <DomainInput navigate={navigate} onProjectCreated={loadProjects} setProjectData={setProjectData} />;
       case 'content':
         return <ContentList domain={currentDomain} project={projectData} navigate={navigate} setProjectData={setProjectData} />;
       case 'suggestions':
@@ -117,8 +116,6 @@ function App() {
         return <ExecutionLogs domain={currentDomain} navigate={navigate} />;
       case 'settings':
         return <Settings domain={currentDomain} />;
-      case 'autopilot':
-        return <AutoPilot domain={currentDomain} project={projectData} navigate={navigate} setProjectData={setProjectData} />;
       default:
         return (
           <Dashboard
@@ -164,10 +161,6 @@ function App() {
             <li className={page === 'settings' ? 'active' : ''} onClick={() => navigate('settings')}>
               <span className="nav-icon">⚙️</span>
               Settings
-            </li>
-            <li className={page === 'autopilot' ? 'active' : ''} onClick={() => navigate('autopilot')}>
-              <span className="nav-icon">🚀</span>
-              AutoPilot
             </li>
           </ul>
         </div>
