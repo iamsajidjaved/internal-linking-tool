@@ -12,73 +12,66 @@ AI-powered WordPress internal linking tool using Google Gemini. Automatically an
 - **AutoPilot mode** – fully automated pipeline: fetch → analyze → suggest → approve → apply
 - **Resume support** – pick up where you left off if interrupted
 - **Export** – download approved suggestions as JSON, Excel, or Word
-- **Settings UI** – configure API keys and WordPress credentials from the browser
 
 ## Requirements
 
 - Node.js >= 18
-- A Google AI Studio API key (Gemini)
+- A Google AI Studio API key ([get one free](https://aistudio.google.com/apikey))
 - A WordPress site with Application Passwords enabled
 
-## Quick Start
+## Install & Run
 
-### Install globally
-
-```bash
-npm install -g internal-linking-tool@1.0.1
-```
-
-### Or use npx
+### Option 1: npx (no install needed)
 
 ```bash
-npx internal-linking-tool@1.0.1
+npx internal-linking-tool
 ```
 
-### Or clone and run locally
+### Option 2: Install globally
 
 ```bash
-git clone <your-repo-url>
-cd internal-linking-tool
-npm run install-all
-cp .env.example .env
-# Edit .env with your Gemini API key
-npm run dev
+npm install -g internal-linking-tool
+internal-linking-tool
 ```
 
-## Configuration
-
-Copy `.env.example` to `.env` and fill in:
-
-```env
-PORT=3000
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Optional – can also be set in the Settings UI
-# DOMAIN=https://example.com
-# WP_USERNAME=your_wp_username
-# WP_APP_PASSWORD=your_wp_app_password
-```
-
-Or configure everything from the **Settings** page in the UI after starting the server.
+Then open **http://localhost:3000** in your browser.
 
 ## Usage
 
-1. Start the server: `npm start` (production) or `npm run dev` (development)
-2. Open `http://localhost:3000` in your browser
-3. Go to **Settings** and enter your Gemini API key
-4. Click **New Project**, enter your WordPress domain and credentials
-5. Toggle **AutoPilot** on for a fully automated run, or proceed manually:
-   - Review fetched content
-   - Run AI analysis and link suggestions
-   - Approve/reject suggestions
-   - Apply approved links to WordPress
+1. Click **New Project** and enter your WordPress domain
+2. Enter your **Gemini API key** and **WordPress credentials** (username + Application Password)
+3. Click **Fetch** to crawl your site content
+4. Run **AI Suggestions** to generate internal link recommendations
+5. **Review & approve** suggestions, then **Apply** to push changes to WordPress
 
-## Scripts
+> **Tip:** Toggle **AutoPilot** on the New Project page for a fully automated run.
+
+## Configuration
+
+All settings (API keys, WordPress credentials) are configured per-project through the UI — no `.env` file needed.
+
+For advanced usage or development, you can optionally set environment variables:
+
+```env
+PORT=3000                    # Server port (default: 3000)
+GEMINI_API_KEY=your_key      # Fallback Gemini API key
+WP_USERNAME=your_username    # Fallback WP username
+WP_APP_PASSWORD=your_pass    # Fallback WP Application Password
+```
+
+## Development
+
+```bash
+git clone https://github.com/your-username/internal-linking-tool.git
+cd internal-linking-tool
+npm run install-all
+npm run dev
+```
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | Start the production server |
-| `npm run dev` | Start backend + frontend in development mode |
+| `npm start` | Start production server on port 3000 |
+| `npm run dev` | Start backend + frontend in dev mode |
 | `npm run build` | Build the React frontend |
 | `npm run install-all` | Install all dependencies (backend + frontend) |
 
