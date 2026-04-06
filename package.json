@@ -1,6 +1,6 @@
 {
   "name": "internal-linking-tool",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI-powered WordPress internal linking tool using Google Gemini. Automatically analyzes content, suggests relevant internal links, and applies them to your WordPress site.",
   "main": "backend/server.js",
   "bin": {

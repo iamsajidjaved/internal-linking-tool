@@ -25,13 +25,13 @@ AI-powered WordPress internal linking tool using Google Gemini. Automatically an
 ### Install globally
 
 ```bash
-npm install -g internal-linking-tool
+npm install -g internal-linking-tool@1.0.1
 ```
 
 ### Or use npx
 
 ```bash
-npx internal-linking-tool
+npx internal-linking-tool@1.0.1
 ```
 
 ### Or clone and run locally
