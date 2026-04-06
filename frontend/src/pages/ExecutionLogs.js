@@ -51,28 +51,52 @@ function ExecutionLogs({ domain, navigate }) {
 
   if (!domain) {
     return (
-      <div className="card">
-        <div className="alert alert-info">Select a project first from the Dashboard.</div>
+      <div>
+        <div className="page-header">
+          <h1>Execution Logs 📋</h1>
+        </div>
+        <div className="card">
+          <div className="empty-state">
+            <span className="empty-icon">📁</span>
+            <h3>No project selected</h3>
+            <p>Select a project from the Dashboard first to view its logs.</p>
+            <button className="btn btn-primary" onClick={() => navigate('dashboard')}>Go to Dashboard</button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>Execution Logs</h1>
-      <p style={{ marginBottom: 16, color: '#666' }}>{domain}</p>
+      <div className="page-header">
+        <div className="breadcrumb">
+          <span onClick={() => navigate('dashboard')}>Dashboard</span>
+          <span className="sep">›</span>
+          <span>{domain?.replace(/^https?:\/\//, '')}</span>
+          <span className="sep">›</span>
+          <span>Logs</span>
+        </div>
+        <h1>Execution Logs 📋</h1>
+        <p className="page-desc">Track all actions and export reports</p>
+      </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && (
+        <div className="alert alert-error">
+          <span className="alert-icon">⚠️</span>
+          {error}
+        </div>
+      )}
 
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div className="card-header">
           <h2>Activity Log</h2>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="btn-group">
             <button className="btn btn-secondary btn-sm" onClick={() => handleExport('json')}>
-              Export JSON
+              📥 Export JSON
             </button>
             <button className="btn btn-secondary btn-sm" onClick={() => handleExport('csv')}>
-              Export CSV
+              📊 Export CSV
             </button>
           </div>
         </div>
@@ -83,14 +107,18 @@ function ExecutionLogs({ domain, navigate }) {
             <p>Loading logs...</p>
           </div>
         ) : logs.length === 0 ? (
-          <div className="alert alert-info">No log entries yet.</div>
+          <div className="empty-state">
+            <span className="empty-icon">📭</span>
+            <h3>No log entries yet</h3>
+            <p>Actions like fetching, analyzing, and applying will appear here.</p>
+          </div>
         ) : (
           <div>
             {logs.slice().reverse().map((log, i) => (
               <div key={i} className="log-entry">
                 <span className="log-time">{new Date(log.timestamp).toLocaleString()}</span>
                 <span className="log-action">{log.action}</span>
-                <span>{log.message}</span>
+                <span className="log-message">{log.message}</span>
               </div>
             ))}
           </div>

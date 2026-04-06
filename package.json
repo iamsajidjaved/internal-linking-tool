@@ -7,7 +7,7 @@
     "start": "node backend/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon backend/server.js",
-    "client": "cd frontend && npm start",
+    "client": "cd frontend && set PORT=3001 && npm start",
     "build": "cd frontend && npm run build",
     "install-all": "npm install && cd frontend && npm install"
   },

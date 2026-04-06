@@ -53,42 +53,75 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
     setApplying('');
   };
 
+  const approvedCount = selectedArticle
+    ? getSuggestions(selectedArticle).filter((s) => s.approved === true).length
+    : 0;
+  const rejectedCount = selectedArticle
+    ? getSuggestions(selectedArticle).filter((s) => s.approved === false).length
+    : 0;
+
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>Review & Approve</h1>
-      <p style={{ marginBottom: 16, color: '#666' }}>{domain}</p>
+      <div className="page-header">
+        <div className="breadcrumb">
+          <span onClick={() => navigate('dashboard')}>Dashboard</span>
+          <span className="sep">›</span>
+          <span>{domain?.replace(/^https?:\/\//, '')}</span>
+          <span className="sep">›</span>
+          <span>Review & Apply</span>
+        </div>
+        <h1>Review & Apply ✅</h1>
+        <p className="page-desc">Approve, edit, or reject suggestions before applying to WordPress</p>
+      </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
+      {/* Workflow steps */}
+      <div className="workflow-steps">
+        <div className="workflow-step done"><span className="step-num">✓</span><span>Fetch</span></div>
+        <div className="step-connector done" />
+        <div className="workflow-step done"><span className="step-num">✓</span><span>Analyze</span></div>
+        <div className="step-connector done" />
+        <div className="workflow-step done"><span className="step-num">✓</span><span>Suggest</span></div>
+        <div className="step-connector done" />
+        <div className="workflow-step active"><span className="step-num">4</span><span>Apply</span></div>
+      </div>
+
+      {error && (
+        <div className="alert alert-error">
+          <span className="alert-icon">⚠️</span>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="alert alert-success">
+          <span className="alert-icon">✅</span>
+          {success}
+        </div>
+      )}
 
       {articles.length === 0 ? (
         <div className="card">
-          <div className="alert alert-info">
-            No suggestions to review. Go to AI Suggestions page first.
+          <div className="empty-state">
+            <span className="empty-icon">📝</span>
+            <h3>No suggestions to review</h3>
+            <p>Generate AI suggestions first on the AI Suggestions page.</p>
+            <button className="btn btn-primary" onClick={() => navigate('suggestions')}>Go to Suggestions</button>
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div className="review-layout">
           {/* Article list */}
-          <div style={{ width: 300, flexShrink: 0 }}>
+          <div className="review-sidebar">
             <div className="card">
               <h3>Articles ({articles.length})</h3>
-              <div style={{ marginTop: 12 }}>
+              <div className="mt-4">
                 {articles.map((a, i) => (
                   <div
                     key={i}
                     onClick={() => setSelectedArticle(a)}
-                    style={{
-                      padding: '10px 12px',
-                      cursor: 'pointer',
-                      background: selectedArticle?.url === a.url ? '#e3f2fd' : 'transparent',
-                      borderRadius: 8,
-                      marginBottom: 4,
-                      borderLeft: selectedArticle?.url === a.url ? '3px solid #4fc3f7' : '3px solid transparent',
-                    }}
+                    className={`article-list-item ${selectedArticle?.url === a.url ? 'selected' : ''}`}
                   >
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{a.title}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                    <div className="article-title">{a.title}</div>
+                    <div className="article-count">
                       {(a.suggestions || []).length} suggestions
                     </div>
                   </div>
@@ -98,53 +131,63 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
           </div>
 
           {/* Suggestion details */}
-          <div style={{ flex: 1 }}>
+          <div className="review-main">
             {selectedArticle ? (
               <div className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h2>{selectedArticle.title}</h2>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                <div className="card-header">
+                  <div>
+                    <h2>{selectedArticle.title}</h2>
+                    <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer" className="link text-sm">
+                      {selectedArticle.url}
+                    </a>
+                  </div>
+                  <div className="btn-group">
                     <button className="btn btn-primary btn-sm" onClick={() => handleSave(selectedArticle)} disabled={saving}>
-                      {saving ? 'Saving...' : 'Save Changes'}
+                      {saving ? 'Saving...' : '💾 Save'}
                     </button>
                     <button
                       className="btn btn-success btn-sm"
                       onClick={() => handleApply(selectedArticle)}
-                      disabled={applying === selectedArticle.url}
+                      disabled={applying === selectedArticle.url || approvedCount === 0}
                     >
-                      {applying === selectedArticle.url ? 'Applying...' : 'Apply to WordPress'}
+                      {applying === selectedArticle.url ? (
+                        <><span className="pulse-dot" /> Applying...</>
+                      ) : (
+                        '🚀 Apply to WordPress'
+                      )}
                     </button>
                   </div>
                 </div>
 
-                <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 16 }}>
-                  <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer" style={{ color: '#4fc3f7' }}>
-                    {selectedArticle.url}
-                  </a>
-                </p>
+                {/* Mini stats under the header */}
+                <div className="flex gap-3 mb-4">
+                  <span className="score score-high">{approvedCount} approved</span>
+                  <span className="score score-low">{rejectedCount} rejected</span>
+                  <span className="text-sm text-muted" style={{ padding: '3px 10px' }}>
+                    {getSuggestions(selectedArticle).length - approvedCount - rejectedCount} pending
+                  </span>
+                </div>
 
                 {getSuggestions(selectedArticle).map((s, i) => (
                   <div key={i} className={`suggestion-card ${s.approved === true ? 'approved' : s.approved === false ? 'rejected' : ''}`}>
                     <div className="suggestion-header">
-                      <div>
-                        <strong>Link #{i + 1}</strong>
-                        {s.relevance_score && (
-                          <span className={`score ${s.relevance_score > 0.7 ? 'score-high' : s.relevance_score > 0.4 ? 'score-medium' : 'score-low'}`} style={{ marginLeft: 12 }}>
-                            Relevance: {(s.relevance_score * 100).toFixed(0)}%
-                          </span>
-                        )}
-                      </div>
+                      <span className="suggestion-number">LINK #{i + 1}</span>
+                      {s.relevance_score != null && (
+                        <span className={`score ${s.relevance_score > 0.7 ? 'score-high' : s.relevance_score > 0.4 ? 'score-medium' : 'score-low'}`}>
+                          {(s.relevance_score * 100).toFixed(0)}% relevance
+                        </span>
+                      )}
                     </div>
 
                     <div className="suggestion-meta">
                       <strong>Target:</strong>{' '}
-                      <a href={s.target_url} target="_blank" rel="noopener noreferrer" style={{ color: '#4fc3f7' }}>
+                      <a href={s.target_url} target="_blank" rel="noopener noreferrer">
                         {s.target_title || s.target_url}
                       </a>
                     </div>
 
                     <div className="form-group" style={{ marginBottom: 8 }}>
-                      <label style={{ fontSize: '0.8rem' }}>Anchor Text</label>
+                      <label style={{ fontSize: '0.78rem' }}>Anchor Text</label>
                       <input
                         className="anchor-edit"
                         value={s.anchor_text}
@@ -167,7 +210,7 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
                         className="btn btn-danger btn-sm"
                         onClick={() => updateLocalSuggestion(selectedArticle.url, i, { approved: false })}
                       >
-                        ✗ Reject
+                        ✕ Reject
                       </button>
                       <button
                         className="btn btn-secondary btn-sm"
@@ -181,7 +224,11 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
               </div>
             ) : (
               <div className="card">
-                <div className="alert alert-info">Select an article from the left to review its link suggestions.</div>
+                <div className="empty-state">
+                  <span className="empty-icon">👈</span>
+                  <h3>Select an article</h3>
+                  <p>Choose an article from the left to review and approve its link suggestions.</p>
+                </div>
               </div>
             )}
           </div>
