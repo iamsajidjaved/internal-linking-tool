@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { getProject, analyzeContentStream } from '../services/api';
 
-function ContentList({ domain, project: initialProject, navigate }) {
+function ContentList({ domain, project: initialProject, navigate, setProjectData }) {
   const [project, setProject] = useState(initialProject);
   const [loading, setLoading] = useState(!initialProject);
   const [analyzing, setAnalyzing] = useState(false);
@@ -28,6 +28,7 @@ function ContentList({ domain, project: initialProject, navigate }) {
     try {
       const data = await getProject(domain);
       setProject(data);
+      if (setProjectData) setProjectData(data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load project');
     }
@@ -108,15 +109,12 @@ function ContentList({ domain, project: initialProject, navigate }) {
   return (
     <div>
       <div className="page-header">
-        <div className="breadcrumb">
-          <span onClick={() => navigate('dashboard')}>Dashboard</span>
-          <span className="sep">›</span>
-          <span>{domain?.replace(/^https?:\/\//, '')}</span>
-          <span className="sep">›</span>
-          <span>Content</span>
+        <div className="page-header-row">
+          <div>
+            <h1>Content Library 📄</h1>
+            <p className="page-desc">Fetched articles ready for AI analysis</p>
+          </div>
         </div>
-        <h1>Content Library 📄</h1>
-        <p className="page-desc">Fetched articles ready for AI analysis</p>
       </div>
 
       {error && (

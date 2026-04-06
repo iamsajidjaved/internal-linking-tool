@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { fetchContent } from '../services/api';
 
-function DomainInput({ navigate }) {
+function DomainInput({ navigate, onProjectCreated }) {
   const [domain, setDomain] = useState('');
   const [source, setSource] = useState('sitemap');
   const [wpUsername, setWpUsername] = useState('');
@@ -32,6 +32,7 @@ function DomainInput({ navigate }) {
       }
 
       const result = await fetchContent(payload);
+      if (onProjectCreated) onProjectCreated();
       navigate('content', normalizedDomain, result.project);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch content');
@@ -42,13 +43,12 @@ function DomainInput({ navigate }) {
   return (
     <div>
       <div className="page-header">
-        <div className="breadcrumb">
-          <span onClick={() => navigate('dashboard')}>Dashboard</span>
-          <span className="sep">›</span>
-          <span>Add Domain</span>
+        <div className="page-header-row">
+          <div>
+            <h1>New Project 🌐</h1>
+            <p className="page-desc">Enter your WordPress site to start discovering internal linking opportunities</p>
+          </div>
         </div>
-        <h1>Add a new domain 🌐</h1>
-        <p className="page-desc">Enter your WordPress site to start discovering internal linking opportunities</p>
       </div>
 
       <div className="card" style={{ maxWidth: 640 }}>

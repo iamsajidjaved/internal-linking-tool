@@ -70,15 +70,12 @@ function ExecutionLogs({ domain, navigate }) {
   return (
     <div>
       <div className="page-header">
-        <div className="breadcrumb">
-          <span onClick={() => navigate('dashboard')}>Dashboard</span>
-          <span className="sep">›</span>
-          <span>{domain?.replace(/^https?:\/\//, '')}</span>
-          <span className="sep">›</span>
-          <span>Logs</span>
+        <div className="page-header-row">
+          <div>
+            <h1>Execution Logs 📋</h1>
+            <p className="page-desc">Track all actions and export reports</p>
+          </div>
         </div>
-        <h1>Execution Logs 📋</h1>
-        <p className="page-desc">Track all actions and export reports</p>
       </div>
 
       {error && (

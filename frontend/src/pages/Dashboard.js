@@ -1,120 +1,189 @@
-import React, { useEffect, useState } from 'react';
-import { listProjects } from '../services/api';
+import React, { useState } from 'react';
 
-function Dashboard({ navigate }) {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+const STATUS_META = {
+  fetched: { label: 'Fetched', color: '#3b82f6', bg: '#eff6ff' },
+  analyzed: { label: 'Analyzed', color: '#8b5cf6', bg: '#f5f3ff' },
+  suggestions_ready: { label: 'Suggestions', color: '#06b6d4', bg: '#ecfeff' },
+  reviewed: { label: 'Reviewed', color: '#f59e0b', bg: '#fffbeb' },
+  applied: { label: 'Applied', color: '#10b981', bg: '#ecfdf5' },
+  unknown: { label: 'Unknown', color: '#9ca3af', bg: '#f9fafb' },
+};
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const loadProjects = async () => {
-    try {
-      const data = await listProjects();
-      setProjects(data);
-    } catch {
-      // No projects yet
-    }
-    setLoading(false);
-  };
+function Dashboard({ navigate, projects, loading, onSelectProject, onDeleteProject, onRefresh }) {
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const totalArticles = projects.reduce((sum, p) => sum + (p.articleCount || 0), 0);
-  const analyzedProjects = projects.filter((p) => p.status === 'analyzed' || p.status === 'suggestions_ready' || p.status === 'reviewed' || p.status === 'applied').length;
+  const statusCounts = projects.reduce((acc, p) => {
+    acc[p.status] = (acc[p.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Filter & sort
+  let filtered = projects.filter((p) =>
+    p.domain.toLowerCase().includes(search.toLowerCase())
+  );
+  if (filterStatus !== 'all') {
+    filtered = filtered.filter((p) => p.status === filterStatus);
+  }
+  filtered.sort((a, b) => {
+    if (sortBy === 'recent') return new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0);
+    if (sortBy === 'name') return a.domain.localeCompare(b.domain);
+    if (sortBy === 'articles') return (b.articleCount || 0) - (a.articleCount || 0);
+    return 0;
+  });
+
+  const getStatusMeta = (status) => STATUS_META[status] || STATUS_META.unknown;
 
   return (
     <div>
       <div className="page-header">
-        <h1>Welcome back 👋</h1>
-        <p className="page-desc">Your AI-powered internal linking command center</p>
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card stat-accent">
-          <span className="stat-icon">📁</span>
-          <div className="stat-value">{projects.length}</div>
-          <div className="stat-label">Projects</div>
-        </div>
-        <div className="stat-card stat-cyan">
-          <span className="stat-icon">📝</span>
-          <div className="stat-value">{totalArticles}</div>
-          <div className="stat-label">Total Articles</div>
-        </div>
-        <div className="stat-card stat-green">
-          <span className="stat-icon">✨</span>
-          <div className="stat-value">{analyzedProjects}</div>
-          <div className="stat-label">Analyzed</div>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h2>Your Projects</h2>
-          <button className="btn btn-primary" onClick={() => navigate('input')}>
-            + New Project
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="loading">
-            <div className="spinner" />
-            <p>Loading projects...</p>
+        <div className="page-header-row">
+          <div>
+            <h1>Projects</h1>
+            <p className="page-desc">Manage all your internal linking projects</p>
           </div>
-        ) : projects.length === 0 ? (
+          <div className="page-header-actions">
+            <button className="btn btn-ghost btn-sm" onClick={onRefresh}>↻ Refresh</button>
+            <button className="btn btn-primary" onClick={() => navigate('input')}>+ New Project</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="stats-row">
+        <div className="stat-pill">
+          <span className="stat-pill-value">{projects.length}</span>
+          <span className="stat-pill-label">Projects</span>
+        </div>
+        <div className="stat-pill">
+          <span className="stat-pill-value">{totalArticles}</span>
+          <span className="stat-pill-label">Total Articles</span>
+        </div>
+        {Object.entries(statusCounts).map(([status, count]) => {
+          const meta = getStatusMeta(status);
+          return (
+            <div
+              key={status}
+              className={`stat-pill clickable ${filterStatus === status ? 'active' : ''}`}
+              onClick={() => setFilterStatus(filterStatus === status ? 'all' : status)}
+            >
+              <span className="stat-pill-value" style={{ color: meta.color }}>{count}</span>
+              <span className="stat-pill-label">{meta.label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Search + Sort bar */}
+      <div className="toolbar">
+        <div className="toolbar-search">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search projects..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="toolbar-controls">
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="toolbar-select">
+            <option value="recent">Recent First</option>
+            <option value="name">Name A-Z</option>
+            <option value="articles">Most Articles</option>
+          </select>
+          {filterStatus !== 'all' && (
+            <button className="btn btn-ghost btn-xs" onClick={() => setFilterStatus('all')}>
+              ✕ Clear filter
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Projects grid */}
+      {loading ? (
+        <div className="loading">
+          <div className="spinner" />
+          <p>Loading projects...</p>
+        </div>
+      ) : filtered.length === 0 && projects.length === 0 ? (
+        <div className="card">
           <div className="empty-state">
             <span className="empty-icon">🚀</span>
             <h3>No projects yet</h3>
             <p>Add your first WordPress domain to start generating SEO-optimized internal links with AI.</p>
-            <button className="btn btn-primary btn-lg" onClick={() => navigate('input')}>
-              + Create First Project
-            </button>
+            <button className="btn btn-primary btn-lg" onClick={() => navigate('input')}>+ Create First Project</button>
           </div>
-        ) : (
-          <div className="project-grid">
-            {projects.map((p, i) => (
-              <div key={i} className="project-card" onClick={() => navigate('content', p.domain)}>
-                <h3>{p.domain.replace(/^https?:\/\//, '')}</h3>
-                <div className="project-articles">
-                  {p.articleCount || 0}
-                  <span>articles</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="card">
+          <div className="empty-state">
+            <span className="empty-icon">🔍</span>
+            <h3>No matching projects</h3>
+            <p>Try a different search term or clear filters.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="project-grid">
+          {filtered.map((p) => {
+            const meta = getStatusMeta(p.status);
+            const domainShort = p.domain.replace(/^https?:\/\//, '');
+            return (
+              <div key={p.domain} className="project-card" onClick={() => onSelectProject(p.domain)}>
+                <div className="project-card-top">
+                  <div className="project-card-domain">
+                    <span className="project-card-favicon">
+                      {domainShort.charAt(0).toUpperCase()}
+                    </span>
+                    <div>
+                      <h3>{domainShort}</h3>
+                      <span className="text-sm text-muted">{p.articleCount || 0} articles</span>
+                    </div>
+                  </div>
+                  <button
+                    className="btn-icon-sm danger"
+                    onClick={(e) => { e.stopPropagation(); onDeleteProject(p.domain); }}
+                    title="Delete project"
+                  >
+                    🗑
+                  </button>
                 </div>
-                <div className="flex items-center justify-between mt-4">
-                  <span className={`badge badge-${p.status}`}>{p.status}</span>
+
+                {/* Progress indicator */}
+                <div className="project-card-progress">
+                  <div className="progress-steps-mini">
+                    {['fetched', 'analyzed', 'suggestions_ready', 'applied'].map((s, i) => {
+                      const reached = ['fetched', 'analyzed', 'suggestions_ready', 'reviewed', 'applied'].indexOf(p.status) >= i;
+                      return (
+                        <React.Fragment key={s}>
+                          {i > 0 && <div className={`step-line ${reached ? 'done' : ''}`} />}
+                          <div className={`step-dot ${reached ? 'done' : ''}`} />
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="project-card-footer">
+                  <span className="project-status-badge" style={{ color: meta.color, background: meta.bg }}>
+                    {meta.label}
+                  </span>
                   {p.lastUpdated && (
-                    <span className="text-sm text-muted">
+                    <span className="text-xs text-muted">
                       {new Date(p.lastUpdated).toLocaleDateString()}
                     </span>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
 
-      {/* Quick start workflow guide */}
-      {projects.length === 0 && (
-        <div className="card">
-          <h2>How it works</h2>
-          <div className="workflow-steps mt-4">
-            <div className="workflow-step active">
-              <span className="step-num">1</span>
-              <span>Add Domain</span>
-            </div>
-            <div className="step-connector" />
-            <div className="workflow-step">
-              <span className="step-num">2</span>
-              <span>Fetch Content</span>
-            </div>
-            <div className="step-connector" />
-            <div className="workflow-step">
-              <span className="step-num">3</span>
-              <span>AI Analysis</span>
-            </div>
-            <div className="step-connector" />
-            <div className="workflow-step">
-              <span className="step-num">4</span>
-              <span>Review & Apply</span>
+          {/* New project card */}
+          <div className="project-card project-card-new" onClick={() => navigate('input')}>
+            <div className="new-project-content">
+              <span className="new-project-icon">+</span>
+              <span>New Project</span>
             </div>
           </div>
         </div>

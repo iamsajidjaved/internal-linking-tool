@@ -63,15 +63,12 @@ function ReviewApprove({ domain, project, navigate, setProjectData }) {
   return (
     <div>
       <div className="page-header">
-        <div className="breadcrumb">
-          <span onClick={() => navigate('dashboard')}>Dashboard</span>
-          <span className="sep">›</span>
-          <span>{domain?.replace(/^https?:\/\//, '')}</span>
-          <span className="sep">›</span>
-          <span>Review & Apply</span>
+        <div className="page-header-row">
+          <div>
+            <h1>Review & Apply ✅</h1>
+            <p className="page-desc">Approve, edit, or reject suggestions before applying to WordPress</p>
+          </div>
         </div>
-        <h1>Review & Apply ✅</h1>
-        <p className="page-desc">Approve, edit, or reject suggestions before applying to WordPress</p>
       </div>
 
       {/* Workflow steps */}

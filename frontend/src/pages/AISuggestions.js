@@ -99,15 +99,12 @@ function AISuggestions({ domain, project, navigate, setProjectData }) {
   return (
     <div>
       <div className="page-header">
-        <div className="breadcrumb">
-          <span onClick={() => navigate('dashboard')}>Dashboard</span>
-          <span className="sep">›</span>
-          <span>{domain?.replace(/^https?:\/\//, '')}</span>
-          <span className="sep">›</span>
-          <span>AI Suggestions</span>
+        <div className="page-header-row">
+          <div>
+            <h1>AI Link Suggestions 🤖</h1>
+            <p className="page-desc">Let Gemini discover the best internal linking opportunities</p>
+          </div>
         </div>
-        <h1>AI Link Suggestions 🤖</h1>
-        <p className="page-desc">Let Gemini discover the best internal linking opportunities</p>
       </div>
 
       {error && (
