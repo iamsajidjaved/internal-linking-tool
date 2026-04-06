@@ -21,9 +21,10 @@ function getModel() {
 async function analyzeContent(article) {
   const m = getModel();
 
-  const prompt = `You are an SEO content analyst.
+  const prompt = `You are an SEO content analyst specializing in Vietnamese-language websites.
 
-Analyze this article and extract structured information.
+Analyze this Vietnamese article and extract structured information.
+Keep keywords and tags in Vietnamese as they appear in the content.
 
 Title: ${article.title}
 URL: ${article.url}
@@ -31,10 +32,10 @@ Content (first 3000 chars): ${article.content.substring(0, 3000)}
 
 Return a JSON object with:
 {
-  "main_topic": "primary topic of the article",
+  "main_topic": "primary topic of the article (in Vietnamese)",
   "keywords": ["keyword1", "keyword2", ...],
   "semantic_tags": ["tag1", "tag2", ...],
-  "summary": "1-2 sentence summary"
+  "summary": "1-2 sentence summary in Vietnamese"
 }
 
 Return ONLY valid JSON, no markdown fences.`;
@@ -68,7 +69,7 @@ async function generateLinkingSuggestions(article, allArticles) {
       keywords: (a.analysis?.keywords || []).join(', '),
     }));
 
-  const prompt = `You are an SEO expert.
+  const prompt = `You are an SEO expert specializing in Vietnamese-language websites.
 
 Given:
 - Current article title: ${article.title}
@@ -81,10 +82,11 @@ ${JSON.stringify(candidates.slice(0, 50), null, 2)}
 
 Task:
 Suggest internal linking opportunities for the current article.
+The content is in Vietnamese — anchor text MUST be in natural Vietnamese.
 
 Rules:
 - Insert links naturally in context
-- Use human-like anchor text (not just the page title)
+- Use human-like Vietnamese anchor text (not just the page title)
 - Do not over-optimize keywords
 - Max 5 links
 - Only suggest links that are contextually relevant

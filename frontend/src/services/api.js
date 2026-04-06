@@ -13,6 +13,38 @@ export const deleteProject = (domain) => api.delete('/project', { data: { domain
 // Workflow
 export const fetchContent = (payload) => api.post('/fetch', payload).then((r) => r.data);
 export const analyzeContent = (domain) => api.post('/analyze', { domain }).then((r) => r.data);
+
+/**
+ * Start analysis with real-time SSE progress.
+ * Returns an object with { eventSource, close() } so the caller can listen to events.
+ * Events: 'init', 'progress', 'done'
+ */
+export const analyzeContentStream = (domain, { onInit, onProgress, onDone, onError }) => {
+  const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+  const url = `${baseURL}/analyze-stream?domain=${encodeURIComponent(domain)}`;
+  const es = new EventSource(url);
+
+  es.addEventListener('init', (e) => {
+    if (onInit) onInit(JSON.parse(e.data));
+  });
+
+  es.addEventListener('progress', (e) => {
+    if (onProgress) onProgress(JSON.parse(e.data));
+  });
+
+  es.addEventListener('done', (e) => {
+    if (onDone) onDone(JSON.parse(e.data));
+    es.close();
+  });
+
+  es.onerror = (e) => {
+    if (onError) onError(e);
+    es.close();
+  };
+
+  return { eventSource: es, close: () => es.close() };
+};
+
 export const generateSuggestions = (domain, articleUrl) =>
   api.post('/suggest', { domain, articleUrl }).then((r) => r.data);
 export const updateSuggestions = (domain, articleUrl, suggestions) =>

@@ -110,8 +110,13 @@ exports.analyzeContent = async (req, res, next) => {
     if (!project) return res.status(404).json({ error: true, message: 'Project not found' });
 
     let analyzed = 0;
-    for (const article of project.articles) {
-      if (article.analysis) {
+    let skipped = 0;
+    let failed = 0;
+    for (let i = 0; i < project.articles.length; i++) {
+      const article = project.articles[i];
+      // Skip already successfully analyzed articles (resume support)
+      if (article.analysis && !article.analysis.error) {
+        skipped++;
         analyzed++;
         continue;
       }
@@ -122,25 +127,126 @@ exports.analyzeContent = async (req, res, next) => {
         article.status = 'analyzed';
         analyzed++;
 
-        // Save progress periodically
-        if (analyzed % 5 === 0) {
-          storageService.saveProject(domain, project);
-        }
+        // Save progress after every article for crash resilience
+        storageService.saveProject(domain, project);
+        console.log(`Analyzed ${analyzed}/${project.articles.length}: ${article.title}`);
       } catch (err) {
+        failed++;
         console.error(`Failed to analyze ${article.url}:`, err.message);
+        // Store error but keep analysis null-ish so retry picks it up
         article.analysis = { main_topic: '', keywords: [], semantic_tags: [], summary: '', error: err.message };
+        storageService.saveProject(domain, project);
       }
     }
 
     project.status = 'analyzed';
     project.lastUpdated = new Date().toISOString();
-    project.logs.push({ timestamp: new Date().toISOString(), action: 'analyze', message: `Analyzed ${analyzed} articles` });
+    project.logs.push({ timestamp: new Date().toISOString(), action: 'analyze', message: `Analyzed ${analyzed} articles (${skipped} resumed, ${failed} failed)` });
     storageService.saveProject(domain, project);
 
     res.json({ success: true, analyzed, project });
   } catch (err) {
     next(err);
   }
+};
+
+// Analyze with SSE progress streaming
+exports.analyzeContentStream = async (req, res) => {
+  const { domain } = req.query;
+  if (!domain) {
+    res.status(400).json({ error: true, message: 'domain is required' });
+    return;
+  }
+
+  const project = storageService.loadProject(domain);
+  if (!project) {
+    res.status(404).json({ error: true, message: 'Project not found' });
+    return;
+  }
+
+  // Set up SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+
+  const send = (event, data) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  const total = project.articles.length;
+  const alreadyDone = project.articles.filter((a) => a.analysis && !a.analysis.error).length;
+
+  send('init', { total, alreadyDone });
+
+  let analyzed = alreadyDone;
+  let failed = 0;
+  let aborted = false;
+
+  req.on('close', () => { aborted = true; });
+
+  for (let i = 0; i < project.articles.length; i++) {
+    if (aborted) break;
+
+    const article = project.articles[i];
+    if (article.analysis && !article.analysis.error) continue;
+
+    try {
+      article.analysis = await geminiLimiter.execute(() =>
+        geminiService.analyzeContent(article)
+      );
+      article.status = 'analyzed';
+      analyzed++;
+      storageService.saveProject(domain, project);
+
+      send('progress', {
+        index: i,
+        analyzed,
+        failed,
+        total,
+        remaining: total - analyzed - failed,
+        article: {
+          url: article.url,
+          title: article.title,
+          status: article.status,
+          analysis: article.analysis,
+        },
+      });
+    } catch (err) {
+      failed++;
+      console.error(`Failed to analyze ${article.url}:`, err.message);
+      article.analysis = { main_topic: '', keywords: [], semantic_tags: [], summary: '', error: err.message };
+      storageService.saveProject(domain, project);
+
+      send('progress', {
+        index: i,
+        analyzed,
+        failed,
+        total,
+        remaining: total - analyzed - failed,
+        article: {
+          url: article.url,
+          title: article.title,
+          status: article.status,
+          analysis: article.analysis,
+        },
+      });
+    }
+  }
+
+  project.status = 'analyzed';
+  project.lastUpdated = new Date().toISOString();
+  project.logs.push({
+    timestamp: new Date().toISOString(),
+    action: 'analyze',
+    message: `Analyzed ${analyzed} articles (${alreadyDone} resumed, ${failed} failed)`,
+  });
+  storageService.saveProject(domain, project);
+
+  send('done', { analyzed, failed, total });
+  res.end();
 };
 
 // Generate linking suggestions
